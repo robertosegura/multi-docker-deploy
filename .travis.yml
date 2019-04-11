@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t robertsegura/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run robertsegura/react-test npm test -- --coverage
+
+after_success:
+  - docker build -t robertsegura/multi-client ./client
+  - docker build -t robertsegura/multi-nginx ./nginx
+  - docker build -t robertsegura/multi-server ./server
+  - docker build -t robertsegura/multi-worker ./worker
+  # Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker hub
+  - docker push robertsegura/multi-client
+  - docker push robertsegura/multi-nginx
+  - docker push robertsegura/multi-server
+  - docker push robertsegura/multi-worker
